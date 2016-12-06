@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/kr/pty"
 )
 
 var (
@@ -54,20 +56,13 @@ func eshell_launch(args []string) int {
 	tempArgs := args[1:]
 	cmd := exec.Command(args[0], tempArgs...)
 	cmd.Env = os.Environ()
-	var out bytes.Buffer
-	var stdErr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stdErr
-	err := cmd.Start()
+
+	f, err := pty.Start(cmd)
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Print(out.String())
-	fmt.Print(stdErr.String())
+
+	io.Copy(os.Stdout, f)
 	return 1
 }
 
